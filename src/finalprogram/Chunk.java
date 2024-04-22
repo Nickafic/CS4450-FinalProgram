@@ -126,42 +126,45 @@ public class Chunk {
     }
     
     public Chunk(int startX, int startY, int startZ) {
-    try {
-        texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("terrain.png"));
-    } catch (Exception e) {
-        System.out.print("ER-ROAR!");
-        e.printStackTrace();
-    }
-    r = new Random();
-    Blocks = new Block[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
-    for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int y = 0; y < CHUNK_SIZE; y++) {
-            for (int z = 0; z < CHUNK_SIZE; z++) {
-                float localRand = r.nextFloat();
-                if (localRand < 0.1f) {
-                    Blocks[x][y][z] = new Block(Block.BlockType.BlockType_BEDROCK);
-                } else if (localRand < 0.3f) {
-                    Blocks[x][y][z] = new Block(Block.BlockType.BlockType_DIRT);
-                } else if (localRand < 0.4f) {
-                    Blocks[x][y][z] = new Block(Block.BlockType.BlockType_WATER);
-                } else if (localRand < 0.6f) {
-                    Blocks[x][y][z] = new Block(Block.BlockType.BlockType_SAND);
-                } else if (localRand < 0.8f) {
-                    Blocks[x][y][z] = new Block(Block.BlockType.BlockType_GRASS);
-                } else {
-                    Blocks[x][y][z] = new Block(Block.BlockType.BlockType_STONE);
+        
+        try {
+            texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("terrain.png"));
+        } catch (Exception e) {
+            System.out.print("ER-ROAR!");
+            e.printStackTrace();
+        }
+        
+        r = new Random();
+        Blocks = new Block[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+        for (int x = 0; x < CHUNK_SIZE; x++) {
+            for (int y = 0; y < CHUNK_SIZE; y++) {
+                for (int z = 0; z < CHUNK_SIZE; z++) {
+                    float localRand = r.nextFloat();
+                    if (localRand < 0.1f) {
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_BEDROCK);
+                    } else if (localRand < 0.3f) {
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_DIRT);
+                    } else if (localRand < 0.4f) {
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_WATER);
+                    } else if (localRand < 0.6f) {
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_SAND);
+                    } else if (localRand < 0.8f) {
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_GRASS);
+                    } else {
+                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_STONE);
+                    }
                 }
             }
         }
+        
+        VBOColorHandle = glGenBuffers();
+        VBOVertexHandle = glGenBuffers();
+        VBOTextureHandle = glGenBuffers();
+        StartX = startX;
+        StartY = startY;
+        StartZ = startZ;
+        rebuildMesh(startX, startY, startZ);
     }
-    VBOColorHandle = glGenBuffers();
-    VBOVertexHandle = glGenBuffers();
-    VBOTextureHandle = glGenBuffers();
-    StartX = startX;
-    StartY = startY;
-    StartZ = startZ;
-    rebuildMesh(startX, startY, startZ);
-}
 
 
     public static float[] createTexCube(float x, float y, Block block){
