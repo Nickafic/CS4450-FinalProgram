@@ -11,7 +11,7 @@ import org.newdawn.slick.util.ResourceLoader;
 
 public class Chunk {
     
-    static final int CHUNK_SIZE = 30;
+    static final int CHUNK_SIZE = 70;
     static final int CUBE_LENGTH = 2;
     
     private Block[][][] Blocks;
@@ -57,7 +57,7 @@ public class Chunk {
                     if (y <= height) {
                         VertexPositionData.put(createCube((float) (startX + x * CUBE_LENGTH), (float) (y * CUBE_LENGTH + (int) (CHUNK_SIZE * .8)), (float) (startZ + z * CUBE_LENGTH)));
                         VertexColorData.put(createCubeVertexCol(getCubeColor(Blocks[(int) x][(int) y][(int) z])));
-                        VertexTextureData.put(createTexCube((float) 0, (float) 0, Blocks[(int) (x)][(int) (y)][(int) (z)]));
+                        VertexTextureData.put(createTexCube((float) 0, (float) 0, Blocks[(int) (x)][(int) (y)][(int) (z)], y, height));
                     }
                 }
             }
@@ -167,9 +167,28 @@ public class Chunk {
     }
 
 
-    public static float[] createTexCube(float x, float y, Block block){
+    public static float[] createTexCube(float x, float y, Block block, float currY, float height){
+        float level = currY/height;
+        
+        if(level <= 0.3){
+            return texHelper(x,y,5);
+        }
+        else if(level <= 0.5){
+            return texHelper(x,y,4);
+        }
+        else if(level <= 0.8){
+            return texHelper(x,y,3);
+        }
+        else if(level <= 1){
+            return texHelper(x,y,0);
+        }
+        else{
+            return texHelper(x,y,0);
+        }
+    }
+    public static float[] texHelper(float x, float y, int id){
         float offset = (1024f/16)/1024f;
-        return switch (block.GetID()) {
+        return switch (id) {
             case 0 -> new float[] {
                 // BOTTOM QUAD(DOWN=+Y)
                 x + offset*3, y + offset*10,

@@ -7,17 +7,26 @@ import org.lwjgl.opengl.DisplayMode;
 import static org.lwjgl.opengl.GL11.*;
 import org.lwjgl.util.glu.GLU;
 import org.lwjgl.Sys;
+import java.nio.FloatBuffer;
+import org.lwjgl.BufferUtils;
 
 public class FinalProgram {
-    private CameraController camera = new CameraController(0f, 0f, 0f);
+    private CameraController camera;
     private Chunk chunk;
     private boolean first = true;
+    
+    private FloatBuffer lightPos;
+    private FloatBuffer whitelt;
+    private FloatBuffer ambientlt;
+    private FloatBuffer diffusedlt;
     
     public void start() {
         try {
             createWindow();
             initGL();
+            camera = new CameraController(0f, 0f, 0f);
             chunk = new Chunk(0, 0, 0);
+            
             
             float dx = 0.0f;
             float dy = 0.0f;
@@ -90,6 +99,14 @@ public class FinalProgram {
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glEnable(GL_BLEND);
         Mouse.setGrabbed(true);
+        
+        initLights();
+        glLight(GL_LIGHT0, GL_POSITION, lightPos); 
+        glLight(GL_LIGHT0, GL_SPECULAR, whitelt);
+        glLight(GL_LIGHT0, GL_DIFFUSE, whitelt);
+        glLight(GL_LIGHT0, GL_AMBIENT, whitelt);
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
     }
     
     private void render() {
@@ -102,6 +119,20 @@ public class FinalProgram {
         glLoadIdentity();
         camera.lookThrough();
         chunk.render();
+    }
+    
+        private void initLights() {
+        lightPos = BufferUtils.createFloatBuffer(4);
+        lightPos.put(0.0f).put(0.0f).put(0.0f).put(1.0f).flip();
+
+        whitelt = BufferUtils.createFloatBuffer(4);
+        whitelt.put(1.0f).put(1.0f).put(1.0f).put(1.0f).flip();
+
+        ambientlt = BufferUtils.createFloatBuffer(4);
+        ambientlt.put(0.2f).put(0.2f).put(0.2f).put(1.0f).flip();
+
+        diffusedlt = BufferUtils.createFloatBuffer(4);
+        diffusedlt.put(0.8f).put(0.8f).put(0.8f).put(1.0f).flip();
     }
     
     public static void main(String[] args) {
