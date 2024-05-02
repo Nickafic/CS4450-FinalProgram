@@ -170,7 +170,7 @@ public class Chunk {
     public static float[] createTexCube(float x, float y, Block block, float currY, float height){
         float level = currY/height;
         
-        if(level <= 0.3){
+        if (currY == 0) {
             return texHelper(x,y,5);
         }
         else if(level <= 0.5){
@@ -179,10 +179,16 @@ public class Chunk {
         else if(level <= 0.8){
             return texHelper(x,y,3);
         }
+        else if(level <= 0.85){
+            return texHelper(x,y,2);
+        }
+        else if(level <= 0.95){
+            return texHelper(x,y,1);
+        }
         else if(level <= 1){
             return texHelper(x,y,0);
         }
-        else{
+        else {
             return texHelper(x,y,0);
         }
     }
