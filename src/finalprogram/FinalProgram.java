@@ -20,6 +20,17 @@ public class FinalProgram {
     private FloatBuffer ambientlt;
     private FloatBuffer diffusedlt;
     
+    private MusicController musicController;
+    private boolean musicPlaying = false;
+    private boolean f1PressedLastFrame = false;
+    private boolean f2PressedLastFrame = false;
+    private int currentMusicIndex = 0;
+    private String[] musicFiles = {"Ambience.wav", "piano2.wav", "StarWars3.wav"};
+    
+    public FinalProgram() {
+        musicController = new MusicController(); // Initialize the MusicController
+    }
+    
     public void start() {
         try {
             createWindow();
@@ -31,7 +42,7 @@ public class FinalProgram {
             float dx = 0.0f;
             float dy = 0.0f;
             float mouseSensitivity = 0.09f;
-            float movementSpeed = 20.0f;
+            float movementSpeed = 90.0f;
             long lastTime = Sys.getTime();
             
             while (!Display.isCloseRequested() && !Keyboard.isKeyDown(Keyboard.KEY_ESCAPE)) {
@@ -62,7 +73,36 @@ public class FinalProgram {
                 if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)){
                     camera.down(movementSpeed * dt);
                 }
+                
+                // Handle F1 key press
+                if (Keyboard.isKeyDown(Keyboard.KEY_F1) && !f1PressedLastFrame) {
+                    f1PressedLastFrame = true;
+                    if (musicPlaying) {
+                        musicController.stopMusic();
+                        musicPlaying = false;
+                        System.out.println("Music stopped.");
+                    } else {
+                        musicController.playMusic(musicFiles[currentMusicIndex]);
+                        musicPlaying = true;
+                        System.out.println("Music started: " + musicFiles[currentMusicIndex]);
+                    }
+                } else if (!Keyboard.isKeyDown(Keyboard.KEY_F1)) {
+                    f1PressedLastFrame = false;
+                }
 
+                // Handle F2 key press
+                if (Keyboard.isKeyDown(Keyboard.KEY_F2) && !f2PressedLastFrame) {
+                    f2PressedLastFrame = true;
+                    currentMusicIndex = (currentMusicIndex + 1) % musicFiles.length;
+                    if (musicPlaying) {
+                        musicController.stopMusic();
+                        musicController.playMusic(musicFiles[currentMusicIndex]);
+                        System.out.println("Switched to music: " + musicFiles[currentMusicIndex]);
+                    }
+                } else if (!Keyboard.isKeyDown(Keyboard.KEY_F2)) {
+                    f2PressedLastFrame = false;
+                }
+                
                 render();
                 Display.update();
                 Display.sync(60);
