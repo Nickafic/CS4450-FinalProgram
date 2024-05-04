@@ -38,11 +38,8 @@ public class Chunk {
   public void rebuildMesh(float startX, float startY, float startZ) {
         
         float persistence = .1f;
-        
         int seed = (int)System.currentTimeMillis();
         SimplexNoise noise = new SimplexNoise(CHUNK_SIZE, persistence, seed);
-        
-        
         VBOColorHandle = glGenBuffers();
         VBOVertexHandle = glGenBuffers();
         VBOTextureHandle = glGenBuffers();
@@ -69,7 +66,24 @@ public class Chunk {
             }
         }
         
-        
+        for(int x = 0; x < CHUNK_SIZE; x++)
+        {
+            for(int z = 0; z < CHUNK_SIZE; z++)
+            {
+                for(int y = 0; y < (CHUNK_SIZE/2.0f)-1; y++)
+                {
+                    if(Blocks[x][y][z] == null)
+                    {
+                        Blocks[(int)(x)][(int)(y)][(int) (z)] = new Block(Block.BlockType.BlockType_WATER);
+                        VertexPositionData.put(createCube((startX + x * CUBE_LENGTH), (y*CUBE_LENGTH+(float)(CHUNK_SIZE*-1.5)),(startZ+z*CUBE_LENGTH) + (float)(CHUNK_SIZE*1.5)));// + (float)(CHUNK_SIZE*1.5)));
+                        VertexColorData.put(createCubeVertexCol(getCubeColor(Blocks[(int)x][(int)y][(int)z])));
+                        VertexTextureData.put(texHelper(0,0,2));  
+                        Blocks[x][y][z].SetActive(true);
+                    }
+
+                }
+            }
+        }
         
         VertexTextureData.flip();
         VertexColorData.flip();
@@ -85,9 +99,6 @@ public class Chunk {
         glBufferData(GL_ARRAY_BUFFER, VertexTextureData,GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
-    
-    //method : Chunk
-
     
     private float[] createCubeVertexCol(float[] CubeColorArray) {
         float[] cubeColors = new float[CubeColorArray.length * 4 * 6];
@@ -145,28 +156,7 @@ public class Chunk {
             e.printStackTrace();
         }
         
-        r = new Random();
         Blocks = new Block[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
-        for (int x = 0; x < CHUNK_SIZE; x++) {
-            for (int y = 0; y < CHUNK_SIZE; y++) {
-                for (int z = 0; z < CHUNK_SIZE; z++) {
-                    float localRand = r.nextFloat();
-                    if (localRand < 0.1f) {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_BEDROCK);
-                    } else if (localRand < 0.3f) {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_DIRT);
-                    } else if (localRand < 0.4f) {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_WATER);
-                    } else if (localRand < 0.6f) {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_SAND);
-                    } else if (localRand < 0.8f) {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_GRASS);
-                    } else {
-                        Blocks[x][y][z] = new Block(Block.BlockType.BlockType_STONE);
-                    }
-                }
-            }
-        }
         
         VBOColorHandle = glGenBuffers();
         VBOVertexHandle = glGenBuffers();
@@ -182,7 +172,7 @@ public class Chunk {
         block.SetActive(true);
     
         if(currY == height-2)
-            return texHelper(x,y,3); // dirt
+            return texHelper(x,y,3);
         else if(currY == height-1){
             if(currY < (int) (CHUNK_SIZE/2.0f))
                 return texHelper(x,y,1);
@@ -193,9 +183,9 @@ public class Chunk {
         
         float level = currY/height;
         if(level <= 0.2)
-            return texHelper(x,y,5); //bedrock
+            return texHelper(x,y,5);
         else if(level <= 0.7)
-            return texHelper(x,y,4); //stone
+            return texHelper(x,y,4);
         else if(level <= 1)
             return texHelper(x,y,3);
         else
