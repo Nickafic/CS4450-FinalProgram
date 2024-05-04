@@ -35,8 +35,8 @@ public class FinalProgram {
         try {
             createWindow();
             initGL();
-            camera = new CameraController(0f, 0f, 0f);
             chunk = new Chunk(0, 0, 0);
+            camera = new CameraController(0f, 0f, 0f, chunk);
             
             
             float dx = 0.0f;

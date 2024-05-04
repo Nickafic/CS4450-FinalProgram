@@ -11,7 +11,7 @@ import org.newdawn.slick.util.ResourceLoader;
 
 public class Chunk {
     
-    static final int CHUNK_SIZE = 70;
+    static final int CHUNK_SIZE = 60;
     static final int CUBE_LENGTH = 2;
     
     private Block[][][] Blocks;
@@ -35,47 +35,58 @@ public class Chunk {
         glPopMatrix();
     }
     
-    public void rebuildMesh(float startX, float startY, float startZ) {
-
-        float persistence = 0.1f;
+  public void rebuildMesh(float startX, float startY, float startZ) {
+        
+        float persistence = .1f;
+        
         int seed = (int)System.currentTimeMillis();
         SimplexNoise noise = new SimplexNoise(CHUNK_SIZE, persistence, seed);
-    
+        
+        
         VBOColorHandle = glGenBuffers();
-        VBOTextureHandle = glGenBuffers();
         VBOVertexHandle = glGenBuffers();
-    
-        FloatBuffer VertexPositionData = BufferUtils.createFloatBuffer((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) * 6 * 12);
-        FloatBuffer VertexColorData = BufferUtils.createFloatBuffer((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) * 6 * 12);
-        FloatBuffer VertexTextureData = BufferUtils.createFloatBuffer((CHUNK_SIZE * CHUNK_SIZE *CHUNK_SIZE)* 6 * 12);
-    
-        for (float x = 0; x < CHUNK_SIZE; x += 1) {
-            for (float z = 0; z < CHUNK_SIZE; z += 1) {
-                for (float y = 0; y < CHUNK_SIZE; y += 1) {
-                    float height = (float) (startY + (100 * noise.getNoise(x, 0, z)) * CUBE_LENGTH);
-
-                    if (y <= height) {
-                        VertexPositionData.put(createCube((float) (startX + x * CUBE_LENGTH), (float) (y * CUBE_LENGTH + (int) (CHUNK_SIZE * .8)), (float) (startZ + z * CUBE_LENGTH)));
-                        VertexColorData.put(createCubeVertexCol(getCubeColor(Blocks[(int) x][(int) y][(int) z])));
-                        VertexTextureData.put(createTexCube((float) 0, (float) 0, Blocks[(int) (x)][(int) (y)][(int) (z)], y, height));
-                    }
+        VBOTextureHandle = glGenBuffers();
+        
+        FloatBuffer VertexPositionData = BufferUtils.createFloatBuffer((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)*6*12);
+        FloatBuffer VertexColorData    = BufferUtils.createFloatBuffer((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)*6*12);
+        FloatBuffer VertexTextureData  = BufferUtils.createFloatBuffer((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)*6*12);
+        
+        for(float x = 0; x < CHUNK_SIZE; x++)
+        {
+            for(float z = 0; z < CHUNK_SIZE; z++)
+            {
+                int i = (int)(startX + x * ((300 - startX)/ 640));
+                int j = (int)(startZ + z * ((300 - startZ)/ 480));
+                float height = 1+Math.abs((startY + CHUNK_SIZE/2.0f + (int) (100 * noise.getNoise(i, j))));
+                    
+                for(float y = 0; y < height; y++)
+                {
+                    Blocks[(int)(x)][(int)(y)][(int) (z)] = new Block(Block.BlockType.BlockType_GRASS);
+                    VertexPositionData.put(createCube((startX + x * CUBE_LENGTH), (y * CUBE_LENGTH +(float)(CHUNK_SIZE * -1.5)),(startZ + z * CUBE_LENGTH) + (float)(CHUNK_SIZE*1.5)));
+                    VertexColorData.put(createCubeVertexCol(getCubeColor(Blocks[(int)x][(int)y][(int)z])));
+                    VertexTextureData.put(createTexCube(0, 0, Blocks[(int)(x)][(int)(y)][(int) (z)], y, height));
                 }
             }
         }
+        
+        
+        
+        VertexTextureData.flip();
         VertexColorData.flip();
         VertexPositionData.flip();
-        VertexTextureData.flip();
-    
-        glBindBuffer(GL_ARRAY_BUFFER,VBOVertexHandle);
-        glBufferData(GL_ARRAY_BUFFER,VertexPositionData,GL_STATIC_DRAW);
+        
+        glBindBuffer(GL_ARRAY_BUFFER, VBOVertexHandle);
+        glBufferData(GL_ARRAY_BUFFER, VertexPositionData, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ARRAY_BUFFER,VBOColorHandle);
-        glBufferData(GL_ARRAY_BUFFER,VertexColorData,GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0); 
+        glBindBuffer(GL_ARRAY_BUFFER, VBOColorHandle);
+        glBufferData(GL_ARRAY_BUFFER, VertexColorData, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ARRAY_BUFFER, VBOTextureHandle);
-        glBufferData(GL_ARRAY_BUFFER, VertexTextureData, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, VertexTextureData,GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
+    
+    //method : Chunk
 
     
     private float[] createCubeVertexCol(float[] CubeColorArray) {
@@ -168,29 +179,28 @@ public class Chunk {
 
 
     public static float[] createTexCube(float x, float y, Block block, float currY, float height){
-        float level = currY/height;
+        block.SetActive(true);
+    
+        if(currY == height-2)
+            return texHelper(x,y,3); // dirt
+        else if(currY == height-1){
+            if(currY < (int) (CHUNK_SIZE/2.0f))
+                return texHelper(x,y,1);
+            else
+                return texHelper(x,y,0);
+        }
+             
         
-        if (currY == 0) {
-            return texHelper(x,y,5);
-        }
-        else if(level <= 0.5){
-            return texHelper(x,y,4);
-        }
-        else if(level <= 0.8){
+        float level = currY/height;
+        if(level <= 0.2)
+            return texHelper(x,y,5); //bedrock
+        else if(level <= 0.7)
+            return texHelper(x,y,4); //stone
+        else if(level <= 1)
             return texHelper(x,y,3);
-        }
-        else if(level <= 0.85){
-            return texHelper(x,y,2);
-        }
-        else if(level <= 0.95){
-            return texHelper(x,y,1);
-        }
-        else if(level <= 1){
-            return texHelper(x,y,0);
-        }
-        else {
-            return texHelper(x,y,0);
-        }
+        else
+            System.out.println("not found");
+            return null; 
     }
     public static float[] texHelper(float x, float y, int id){
         float offset = (1024f/16)/1024f;

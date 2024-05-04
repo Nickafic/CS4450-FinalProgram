@@ -14,8 +14,8 @@ public class CameraController {
     private long lastTime;
     private Chunk chunk;
     
-    public CameraController(float x, float y, float z){
-        chunk = new Chunk(0,0,0);
+    public CameraController(float x, float y, float z, Chunk newChunk){
+        chunk = newChunk;
         
         position = new Vector3f(x,y,z);
         lightpos = new Vector3f(x,y,z);
