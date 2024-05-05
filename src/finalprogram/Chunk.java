@@ -34,7 +34,7 @@ public class Chunk {
         glDrawArrays(GL_QUADS, 0, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE* 24);
         glPopMatrix();
     }
-    
+  
   public void rebuildMesh(float startX, float startY, float startZ) {
         
         float persistence = .1f;
@@ -52,13 +52,11 @@ public class Chunk {
         {
             for(float z = 0; z < CHUNK_SIZE; z++)
             {
-                int i = (int)(startX + x * ((300 - startX)/ 640));
-                int j = (int)(startZ + z * ((300 - startZ)/ 480));
-                float height = 1+Math.abs((startY + CHUNK_SIZE/2.0f + (int) (100 * noise.getNoise(i, j))));
+                float height = 1+Math.abs((startY + CHUNK_SIZE/2.0f + (int) (100 * noise.getNoise(calcNoise(x,startX,640), calcNoise(z,startZ,480)))));
                     
                 for(float y = 0; y < height; y++)
                 {
-                    Blocks[(int)(x)][(int)(y)][(int) (z)] = new Block(Block.BlockType.BlockType_GRASS);
+                    Blocks[(int)(x)][(int)(y)][(int) (z)] = new Block(Block.BlockType.BlockType_DIRT);
                     VertexPositionData.put(createCube((startX + x * CUBE_LENGTH), (y * CUBE_LENGTH +(float)(CHUNK_SIZE * -1.5)),(startZ + z * CUBE_LENGTH) + (float)(CHUNK_SIZE*1.5)));
                     VertexColorData.put(createCubeVertexCol(getCubeColor(Blocks[(int)x][(int)y][(int)z])));
                     VertexTextureData.put(createTexCube(0, 0, Blocks[(int)(x)][(int)(y)][(int) (z)], y, height));
@@ -66,24 +64,8 @@ public class Chunk {
             }
         }
         
-        for(int x = 0; x < CHUNK_SIZE; x++)
-        {
-            for(int z = 0; z < CHUNK_SIZE; z++)
-            {
-                for(int y = 0; y < (CHUNK_SIZE/2.0f)-1; y++)
-                {
-                    if(Blocks[x][y][z] == null)
-                    {
-                        Blocks[(int)(x)][(int)(y)][(int) (z)] = new Block(Block.BlockType.BlockType_WATER);
-                        VertexPositionData.put(createCube((startX + x * CUBE_LENGTH), (y*CUBE_LENGTH+(float)(CHUNK_SIZE*-1.5)),(startZ+z*CUBE_LENGTH) + (float)(CHUNK_SIZE*1.5)));// + (float)(CHUNK_SIZE*1.5)));
-                        VertexColorData.put(createCubeVertexCol(getCubeColor(Blocks[(int)x][(int)y][(int)z])));
-                        VertexTextureData.put(texHelper(0,0,2));  
-                        Blocks[x][y][z].SetActive(true);
-                    }
-
-                }
-            }
-        }
+        fillWater(VertexPositionData, VertexColorData, VertexTextureData, startX, startZ);
+        
         
         VertexTextureData.flip();
         VertexColorData.flip();
@@ -106,6 +88,27 @@ public class Chunk {
             cubeColors[i] = CubeColorArray[i % CubeColorArray.length];
         }
         return cubeColors;
+    }
+    
+    private void fillWater(FloatBuffer PositionBuff, FloatBuffer ColorBuff,FloatBuffer TextureBuff, float startX, float startZ){
+        for(int x = 0; x < CHUNK_SIZE; x++)
+        {
+            for(int z = 0; z < CHUNK_SIZE; z++)
+            {
+                for(int y = 0; y < (CHUNK_SIZE/2.0f)-1; y++)
+                {
+                    if(Blocks[x][y][z] == null)
+                    {
+                        Blocks[(int)(x)][(int)(y)][(int) (z)] = new Block(Block.BlockType.BlockType_WATER);
+                        PositionBuff.put(createCube((startX + x * CUBE_LENGTH), (y*CUBE_LENGTH+(float)(CHUNK_SIZE*-1.5)),(startZ+z*CUBE_LENGTH) + (float)(CHUNK_SIZE*1.5)));// + (float)(CHUNK_SIZE*1.5)));
+                        ColorBuff.put(createCubeVertexCol(getCubeColor(Blocks[(int)x][(int)y][(int)z])));
+                        TextureBuff.put(texHelper(0,0,2));  
+                        Blocks[x][y][z].SetActive(true);
+                    }
+
+                }
+            }
+        }
     }
     
     public static float[] createCube(float x, float y, float z) {
@@ -152,7 +155,7 @@ public class Chunk {
         try {
             texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("terrain.png"));
         } catch (Exception e) {
-            System.out.print("ER-ROAR!");
+            System.out.print("Could not load png");
             e.printStackTrace();
         }
         
@@ -161,16 +164,19 @@ public class Chunk {
         VBOColorHandle = glGenBuffers();
         VBOVertexHandle = glGenBuffers();
         VBOTextureHandle = glGenBuffers();
+        
         StartX = startX;
         StartY = startY;
         StartZ = startZ;
+        
         rebuildMesh(startX, startY, startZ);
     }
+    
 
 
     public static float[] createTexCube(float x, float y, Block block, float currY, float height){
         block.SetActive(true);
-    
+        float posY = currY/height;
         if(currY == height-2)
             return texHelper(x,y,3);
         else if(currY == height-1){
@@ -181,16 +187,19 @@ public class Chunk {
         }
              
         
-        float level = currY/height;
-        if(level <= 0.2)
+        if(posY <= 0.2)
             return texHelper(x,y,5);
-        else if(level <= 0.7)
+        else if(posY <= 0.7)
             return texHelper(x,y,4);
-        else if(level <= 1)
+        else if(posY <= 1)
             return texHelper(x,y,3);
         else
             System.out.println("not found");
             return null; 
+    }
+    
+    public static int calcNoise(float currX, float startVal, float offset){
+       return(int)(startVal + currX * ((300 - startVal)/ offset));
     }
     public static float[] texHelper(float x, float y, int id){
         float offset = (1024f/16)/1024f;
