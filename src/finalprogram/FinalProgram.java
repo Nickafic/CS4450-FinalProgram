@@ -102,6 +102,26 @@ public class FinalProgram {
                 } else if (!Keyboard.isKeyDown(Keyboard.KEY_F2)) {
                     f2PressedLastFrame = false;
                 }
+
+                // Press 1 to change the color of ambient light
+                if (Keyboard.isKeyDown(Keyboard.KEY_1)) {
+                    glLight(GL_LIGHT0, GL_AMBIENT, ambientlt);
+                }
+                
+                // Press 2 to change the color of diffused light
+                if (Keyboard.isKeyDown(Keyboard.KEY_2)) {
+                    glLight(GL_LIGHT0, GL_DIFFUSE, diffusedlt);
+                }
+                
+                // Press 3 to revert changes
+                if (Keyboard.isKeyDown(Keyboard.KEY_3)) {
+                    glLight(GL_LIGHT0, GL_POSITION, lightPos);
+                    glLight(GL_LIGHT0, GL_SPECULAR, whitelt);
+                    glLight(GL_LIGHT0, GL_DIFFUSE, whitelt);
+                    glLight(GL_LIGHT0, GL_AMBIENT, whitelt);
+                    glEnable(GL_LIGHTING);
+                    glEnable(GL_LIGHT0);
+                }
                 
                 render();
                 Display.update();
@@ -169,10 +189,10 @@ public class FinalProgram {
         whitelt.put(1.0f).put(1.0f).put(1.0f).put(1.0f).flip();
 
         ambientlt = BufferUtils.createFloatBuffer(4);
-        ambientlt.put(0.2f).put(0.2f).put(0.2f).put(1.0f).flip();
+        ambientlt.put(1.0f).put(1.0f).put(0.0f).put(1.0f).flip();
 
         diffusedlt = BufferUtils.createFloatBuffer(4);
-        diffusedlt.put(0.8f).put(0.8f).put(0.8f).put(1.0f).flip();
+        diffusedlt.put(0.0f).put(0.0f).put(1.0f).put(1.0f).flip();
     }
     
     public static void main(String[] args) {
