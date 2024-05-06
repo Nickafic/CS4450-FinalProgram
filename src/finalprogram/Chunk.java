@@ -22,6 +22,11 @@ public class Chunk {
     private int StartX, StartY, StartZ;
     private Random r;
 
+    private Block ltBlock;  //light block
+    private int lightVertVBO;
+    private int lightColVBO;
+    private int lightTexVBO;
+
     void render(){
         glPushMatrix();
         glBindBuffer(GL_ARRAY_BUFFER, VBOVertexHandle);
@@ -32,6 +37,18 @@ public class Chunk {
         glBindTexture(GL_TEXTURE_2D, 1);
         glTexCoordPointer(2,GL_FLOAT,0,0L);
         glDrawArrays(GL_QUADS, 0, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE* 24);
+        glPopMatrix();
+
+        glPushMatrix();
+        glTranslatef(0, 32, 0); // moving light source Block at expected location
+        glBindBuffer(GL_ARRAY_BUFFER, lightVertVBO);
+        glVertexPointer(3, GL_FLOAT, 0, 0L);
+        glBindBuffer(GL_ARRAY_BUFFER,lightVertVBO);
+        glColorPointer(3, GL_FLOAT, 0, 0L);
+        glBindBuffer(GL_ARRAY_BUFFER, lightTexVBO);
+        glBindTexture(GL_TEXTURE_2D, 1);
+        glTexCoordPointer(2,GL_FLOAT,0,0L);
+        glDrawArrays(GL_QUADS, 0, 24);
         glPopMatrix();
     }
 
@@ -44,10 +61,16 @@ public class Chunk {
         VBOColorHandle = glGenBuffers();
         VBOTextureHandle = glGenBuffers();
         VBOVertexHandle = glGenBuffers();
+        lightColVBO = glGenBuffers();
+        lightTexVBO = glGenBuffers();
+        lightVertVBO = glGenBuffers();
 
         FloatBuffer VertexPositionData = BufferUtils.createFloatBuffer((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) * 6 * 12);
         FloatBuffer VertexColorData = BufferUtils.createFloatBuffer((CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) * 6 * 12);
         FloatBuffer VertexTextureData = BufferUtils.createFloatBuffer((CHUNK_SIZE * CHUNK_SIZE *CHUNK_SIZE)* 6 * 12);
+        FloatBuffer LightPosData = BufferUtils.createFloatBuffer(6 * 12);
+        FloatBuffer LightColData = BufferUtils.createFloatBuffer(6 * 12);
+        FloatBuffer LightTexData = BufferUtils.createFloatBuffer(6 * 12);
 
         for (float x = 0; x < CHUNK_SIZE; x += 1) {
             for (float z = 0; z < CHUNK_SIZE; z += 1) {
@@ -92,9 +115,17 @@ public class Chunk {
                 }
             }
         }
+        // Light source block
+        LightPosData.put(createCube(-2f, 0f, -2f));
+        LightColData.put(createCubeVertexCol(getCubeColor(ltBlock)));
+        LightTexData.put(createTexCube(0.0f, 0.0f, ltBlock, 0.0f, 1.0f));
+        
         VertexColorData.flip();
         VertexPositionData.flip();
         VertexTextureData.flip();
+        LightColData.flip();
+        LightPosData.flip();
+        LightTexData.flip();
 
         glBindBuffer(GL_ARRAY_BUFFER,VBOVertexHandle);
         glBufferData(GL_ARRAY_BUFFER,VertexPositionData,GL_STATIC_DRAW);
@@ -104,6 +135,16 @@ public class Chunk {
         glBindBuffer(GL_ARRAY_BUFFER, 0); 
         glBindBuffer(GL_ARRAY_BUFFER, VBOTextureHandle);
         glBufferData(GL_ARRAY_BUFFER, VertexTextureData, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER,lightVertVBO);
+        glBufferData(GL_ARRAY_BUFFER,LightPosData,GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ARRAY_BUFFER,lightColVBO);
+        glBufferData(GL_ARRAY_BUFFER,LightColData,GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0); 
+        glBindBuffer(GL_ARRAY_BUFFER, lightTexVBO);
+        glBufferData(GL_ARRAY_BUFFER, LightTexData, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
@@ -166,7 +207,11 @@ public class Chunk {
         
         Blocks = new Block[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
 
-
+        ltBlock = new Block(Block.BlockType.BlockType_LIGHT);
+        lightColVBO = glGenBuffers();
+        lightVertVBO = glGenBuffers();
+        lightTexVBO = glGenBuffers();
+        
         VBOColorHandle = glGenBuffers();
         VBOVertexHandle = glGenBuffers();
         VBOTextureHandle = glGenBuffers();
@@ -183,8 +228,10 @@ public class Chunk {
         if(currY == 2) {
             return texHelper(x,y,1);
         }
-
-        if(level <= 0){
+        if (block.GetID() == -1) {
+            return texHelper(x,y,-1);
+        }
+        else if(level <= 0){
             return texHelper(x,y,5);
         }
         else if(level <= 0.5){
@@ -358,6 +405,37 @@ public class Chunk {
                 x + offset * 2, y + offset * 0,
                 x + offset * 2, y + offset * 1,
                 x + offset * 1, y + offset * 1};
+            case -1 -> new float[] {    //////////////// ltBlock source block
+                // BOTTOM QUAD(DOWN=+Y)
+                x + offset * 2, y + offset * 4,
+                x + offset * 3, y + offset * 4,
+                x + offset * 3, y + offset * 5,
+                x + offset * 2, y + offset * 5,
+                // TOP!
+                x + offset * 2, y + offset * 4,
+                x + offset * 3, y + offset * 4,
+                x + offset * 3, y + offset * 5,
+                x + offset * 2, y + offset * 5,
+                // FRONT QUAD
+                x + offset * 2, y + offset * 4,
+                x + offset * 3, y + offset * 4,
+                x + offset * 3, y + offset * 5,
+                x + offset * 2, y + offset * 5,
+                // BACK QUAD
+                x + offset * 2, y + offset * 4,
+                x + offset * 3, y + offset * 4,
+                x + offset * 3, y + offset * 5,
+                x + offset * 2, y + offset * 5,
+                // LEFT QUAD
+                x + offset * 2, y + offset * 4,
+                x + offset * 3, y + offset * 4,
+                x + offset * 3, y + offset * 5,
+                x + offset * 2, y + offset * 5,
+                // RIGHT QUAD
+                x + offset * 2, y + offset * 4,
+                x + offset * 3, y + offset * 4,
+                x + offset * 3, y + offset * 5,
+                x + offset * 2, y + offset * 5};
             default -> new float[]{
                 // BOTTOM QUAD(DOWN=+Y)
                 x + offset * 1, y + offset * 1,
